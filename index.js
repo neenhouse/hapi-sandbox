@@ -1,6 +1,7 @@
 'use strict';
 
 const Hapi = require('@hapi/hapi');
+const Boom = require('@hapi/boom');
 
 // test counter
 let counter = 0;
@@ -16,24 +17,26 @@ const init = async () => {
     console.log('Server running on %s', server.info.uri);
 
     server.ext('onRequest', (request, h) => {
-        console.log(`Counter is at ${counter}`);
-        counter++;
+        console.log(`Increment counter ${counter++} -> ${counter}`);
         return h.continue;
     });
 
     server.events.on('response', function (request) {
-        throw new Error('boom');
-        return;
+        console.error('throw a 503');
+        throw Boom.serverUnavailable('rejected');
     });
 
     server.events.on('response', function (request) {
-        console.log('decrement counter');
-        counter--;
+        console.log(`Decrement counter ${counter--} -> ${counter}`);
+    });
+
+    server.events.on('response', function (request) {
+        console.log('Response finished');
     });
 };
 
 process.on('unhandledRejection', (err) => {
-    console.log('unhandled exception:', err);
+    // silence is golden
 });
 
 init();
