@@ -17,13 +17,24 @@ const init = async () => {
     console.log('Server running on %s', server.info.uri);
 
     server.ext('onRequest', (request, h) => {
+        if (Math.round(Math.random()) === 1) {
+            console.error('throw a 503 onRequest() before increment');
+            throw Boom.serverUnavailable('rejected: onRequest()');
+        }
+        return h.continue;
+    });
+
+    server.ext('onRequest', (request, h) => {
         console.log(`Increment counter ${counter++} -> ${counter}`);
         return h.continue;
     });
 
-    server.events.on('response', function (request) {
-        console.error('throw a 503');
-        throw Boom.serverUnavailable('rejected');
+    server.ext('onResponse', (request, h) => {
+        if (Math.round(Math.random()) === 1) {
+            console.error('throw a 503 onResponse() after increment');
+            throw Boom.serverUnavailable('rejected: onResponse()');
+        }
+        return h.continue;
     });
 
     server.events.on('response', function (request) {
@@ -32,6 +43,7 @@ const init = async () => {
 
     server.events.on('response', function (request) {
         console.log('Response finished');
+        console.log('\n');
     });
 };
 
